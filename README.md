@@ -6,10 +6,10 @@ A native macOS break reminder app. Follows the **20-20-20 rule** — every 20 mi
 
 ## Features
 
-- Menu bar countdown timer with eye icon
+- Menu bar app with countdown timer and eye icon
 - Fullscreen overlay on all monitors during breaks
 - Skip (button or Esc), Pause, Resume, Postpone controls
-- Configurable break interval and duration
+- Configurable break interval, duration, and pre-break warning
 - Sound notifications (Glass on break start, Ping on break end)
 - Settings apply immediately
 - Smooth fade in/out animations
@@ -27,7 +27,7 @@ A native macOS break reminder app. Follows the **20-20-20 rule** — every 20 mi
 
 ## Usage
 
-Once launched, EyeBreak lives in your **menu bar** and **Dock**. Click the menu bar icon to pause, skip, or postpone breaks. Click the Dock icon to open Settings.
+EyeBreak lives in your **menu bar**. Click the eye icon to pause, skip, postpone breaks, or open Settings.
 
 ## License
 
