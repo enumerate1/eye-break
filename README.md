@@ -14,12 +14,17 @@ A native macOS break reminder app. Follows the **20-20-20 rule** — every 20 mi
 - Settings apply immediately
 - Smooth fade in/out animations
 
-## Requirements
+## Download
 
-- macOS 14.0+
-- Swift 5.9+ (Xcode CommandLineTools)
+Grab the latest release: [EyeBreak.app](https://github.com/enumerate1/eye-break/releases/latest)
 
-## Build & Run
+Unzip, move to Applications, and double-click to launch.
+
+> First launch: right-click → Open to bypass Gatekeeper (unsigned app).
+
+## Build from Source
+
+Requires macOS 14.0+ and Swift 5.9+ (Xcode CommandLineTools).
 
 ```bash
 ./build.sh && open .build/EyeBreak.app
