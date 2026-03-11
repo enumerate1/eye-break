@@ -1,10 +1,18 @@
 import AppKit
-import SwiftUI
+import Combine
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
     private let breakTimer = BreakTimer()
-    private var timerObservation: Any?
+    private var timerObservation: AnyCancellable?
+
+    private var statusMenuItem: NSMenuItem!
+    private var startItem: NSMenuItem!
+    private var pauseItem: NSMenuItem!
+    private var skipItem: NSMenuItem!
+    private var postponeItem: NSMenuItem!
+    private var resumeItem: NSMenuItem!
+    private var lastState: BreakState?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -17,7 +25,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             button.imagePosition = .imageLeading
         }
 
-        setupMenu()
+        buildMenu()
         breakTimer.start()
 
         timerObservation = breakTimer.objectWillChange.sink { [weak self] _ in
@@ -27,54 +35,31 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func setupMenu() {
-        updateMenu()
-    }
-
-    private func updateMenu() {
+    private func buildMenu() {
         let menu = NSMenu()
 
-        switch breakTimer.state {
-        case .idle:
-            menu.addItem(withTitle: "EyeBreak — Not started", action: nil, keyEquivalent: "")
-            menu.addItem(NSMenuItem.separator())
-            let startItem = NSMenuItem(title: "Start", action: #selector(startTimer), keyEquivalent: "s")
-            startItem.target = self
-            menu.addItem(startItem)
+        statusMenuItem = menu.addItem(withTitle: "", action: nil, keyEquivalent: "")
+        menu.addItem(NSMenuItem.separator())
 
-        case .counting, .preBreak:
-            menu.addItem(withTitle: "Next break in \(TimerFormatter.format(breakTimer.remainingSeconds))", action: nil, keyEquivalent: "")
-            menu.addItem(NSMenuItem.separator())
-            let pauseItem = NSMenuItem(title: "Pause", action: #selector(pauseTimer), keyEquivalent: "p")
-            pauseItem.target = self
-            menu.addItem(pauseItem)
-            let skipItem = NSMenuItem(title: "Skip Next Break", action: #selector(skipBreak), keyEquivalent: "")
-            skipItem.target = self
-            menu.addItem(skipItem)
-            let postponeItem = NSMenuItem(title: "Postpone 5 min", action: #selector(postponeBreak), keyEquivalent: "")
-            postponeItem.target = self
-            menu.addItem(postponeItem)
+        startItem = NSMenuItem(title: "Start", action: #selector(startTimer), keyEquivalent: "s")
+        startItem.target = self
+        menu.addItem(startItem)
 
-            statusItem.button?.title = "\(TimerFormatter.format(breakTimer.remainingSeconds))"
+        pauseItem = NSMenuItem(title: "Pause", action: #selector(pauseTimer), keyEquivalent: "p")
+        pauseItem.target = self
+        menu.addItem(pauseItem)
 
-        case .onBreak:
-            menu.addItem(withTitle: "On break — \(TimerFormatter.format(breakTimer.breakRemainingSeconds))", action: nil, keyEquivalent: "")
-            menu.addItem(NSMenuItem.separator())
-            let skipItem = NSMenuItem(title: "Skip Break", action: #selector(skipBreak), keyEquivalent: "")
-            skipItem.target = self
-            menu.addItem(skipItem)
+        resumeItem = NSMenuItem(title: "Resume", action: #selector(resumeTimer), keyEquivalent: "r")
+        resumeItem.target = self
+        menu.addItem(resumeItem)
 
-            statusItem.button?.title = "\(TimerFormatter.format(breakTimer.breakRemainingSeconds))"
+        skipItem = NSMenuItem(title: "Skip Next Break", action: #selector(skipBreak), keyEquivalent: "")
+        skipItem.target = self
+        menu.addItem(skipItem)
 
-        case .paused:
-            menu.addItem(withTitle: "Paused — \(TimerFormatter.format(breakTimer.remainingSeconds)) remaining", action: nil, keyEquivalent: "")
-            menu.addItem(NSMenuItem.separator())
-            let resumeItem = NSMenuItem(title: "Resume", action: #selector(resumeTimer), keyEquivalent: "r")
-            resumeItem.target = self
-            menu.addItem(resumeItem)
-
-            statusItem.button?.title = "⏸"
-        }
+        postponeItem = NSMenuItem(title: "Postpone 5 min", action: #selector(postponeBreak), keyEquivalent: "")
+        postponeItem.target = self
+        menu.addItem(postponeItem)
 
         menu.addItem(NSMenuItem.separator())
         let settingsItem = NSMenuItem(title: "Settings...", action: #selector(openSettings), keyEquivalent: ",")
@@ -84,6 +69,41 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(quitItem)
 
         statusItem.menu = menu
+        updateMenu()
+    }
+
+    private func updateMenu() {
+        let state = breakTimer.state
+
+        switch state {
+        case .idle:
+            statusMenuItem.title = "EyeBreak — Not started"
+            statusItem.button?.title = ""
+        case .counting, .preBreak:
+            statusMenuItem.title = "Next break in \(TimerFormatter.format(breakTimer.remainingSeconds))"
+            statusItem.button?.title = TimerFormatter.format(breakTimer.remainingSeconds)
+        case .onBreak:
+            statusMenuItem.title = "On break — \(TimerFormatter.format(breakTimer.breakRemainingSeconds))"
+            statusItem.button?.title = TimerFormatter.format(breakTimer.breakRemainingSeconds)
+        case .paused:
+            statusMenuItem.title = "Paused — \(TimerFormatter.format(breakTimer.remainingSeconds)) remaining"
+            statusItem.button?.title = "⏸"
+        }
+
+        guard state != lastState else { return }
+        lastState = state
+
+        startItem.isHidden = state != .idle
+        pauseItem.isHidden = !(state == .counting || state == .preBreak)
+        skipItem.isHidden = !(state == .counting || state == .preBreak || state == .onBreak)
+        postponeItem.isHidden = !(state == .counting || state == .preBreak)
+        resumeItem.isHidden = state != .paused
+
+        if state == .onBreak {
+            skipItem.title = "Skip Break"
+        } else {
+            skipItem.title = "Skip Next Break"
+        }
     }
 
     @objc private func startTimer() { breakTimer.start() }

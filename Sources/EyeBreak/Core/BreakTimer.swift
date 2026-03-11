@@ -32,6 +32,11 @@ class BreakTimer: ObservableObject {
             }
     }
 
+    deinit {
+        timer?.cancel()
+        settingsObservation?.cancel()
+    }
+
     func start() {
         remainingSeconds = settings.breakInterval
         breakRemainingSeconds = settings.breakDuration

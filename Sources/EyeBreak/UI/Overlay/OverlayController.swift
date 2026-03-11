@@ -1,5 +1,4 @@
 import AppKit
-import SwiftUI
 
 class OverlayController {
     static let shared = OverlayController()
@@ -10,10 +9,8 @@ class OverlayController {
         dismissOverlay()
 
         for screen in NSScreen.screens {
-            let hostingView = NSHostingView(
-                rootView: BreakOverlayView(breakTimer: breakTimer)
-            )
-            let window = BreakOverlayWindow.create(for: screen, contentView: hostingView)
+            let overlayView = BreakOverlayNSView(breakTimer: breakTimer)
+            let window = BreakOverlayWindow.create(for: screen, contentView: overlayView)
             window.alphaValue = 0
             window.makeKeyAndOrderFront(nil)
 
@@ -25,9 +22,9 @@ class OverlayController {
             windows.append(window)
         }
 
-        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            if event.keyCode == 53 { // Esc key
-                breakTimer.skipBreak()
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak breakTimer] event in
+            if event.keyCode == 53 {
+                breakTimer?.skipBreak()
                 return nil
             }
             return event
@@ -48,7 +45,8 @@ class OverlayController {
                 context.duration = 0.2
                 window.animator().alphaValue = 0
             }, completionHandler: {
-                window.orderOut(nil)
+                window.contentView = nil
+                window.close()
             })
         }
     }

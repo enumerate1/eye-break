@@ -1,5 +1,4 @@
 import AppKit
-import SwiftUI
 
 class SettingsWindowController {
     static let shared = SettingsWindowController()
@@ -12,17 +11,17 @@ class SettingsWindowController {
             return
         }
 
-        let settingsView = SettingsView()
-        let hostingView = NSHostingView(rootView: settingsView)
+        let settingsView = SettingsNSView(settings: AppSettings())
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 350, height: 280),
+            contentRect: .zero,
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
         )
         window.title = "EyeBreak Settings"
-        window.contentView = hostingView
+        window.contentView = settingsView
+        window.setContentSize(settingsView.fittingSize)
         window.center()
         window.isReleasedWhenClosed = false
         window.makeKeyAndOrderFront(nil)
