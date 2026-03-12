@@ -46,7 +46,7 @@ class OverlayController {
                 window.animator().alphaValue = 0
             }, completionHandler: {
                 window.contentView = nil
-                window.close()
+                window.orderOut(nil)
             })
         }
     }
